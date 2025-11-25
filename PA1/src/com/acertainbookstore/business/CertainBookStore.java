@@ -1,15 +1,7 @@
 package com.acertainbookstore.business;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -316,8 +308,26 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
 	@Override
-	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
-		throw new BookStoreException();
+	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException{
+
+        if (numBooks < 0) {
+            throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
+        }
+
+        List<StockBook> stockBooks = getBooks();
+
+        return stockBooks.stream()
+                .filter(b -> b.getAverageRating() > 0 )
+                .sorted((a,b) -> Float.compare(b.getAverageRating(), a.getAverageRating()))
+                .limit(numBooks)
+                .map(b -> new ImmutableBook(
+                        b.getISBN(),
+                        b.getTitle(),
+                        b.getAuthor(),
+                        b.getPrice()
+                )).collect(Collectors.toList());
+
+
 	}
 
 	/*
@@ -327,7 +337,15 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException();
+
+
+        var bmv = bookMap.values();
+        return bmv
+                .stream()
+                .filter(b -> b.getNumSaleMisses() > 0)
+                .map(BookStoreBook::immutableStockBook)
+                .collect(Collectors.toList());
+
 	}
 
 	/*
