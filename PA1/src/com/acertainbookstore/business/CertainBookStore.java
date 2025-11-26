@@ -1,15 +1,7 @@
 package com.acertainbookstore.business;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -317,7 +309,34 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
-		throw new BookStoreException();
+        if (numBooks < 0) {
+            throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
+        }
+
+        // Get all books that are editor picks.
+        BookStoreBook[] listAllBooks = bookMap.values().toArray(BookStoreBook[]::new);
+
+        Arrays.sort(listAllBooks, (a, b) -> Float.compare(b.getAverageRating(), a.getAverageRating()));
+
+        Set<Integer> tobePicked = new HashSet<>();
+        int numAllBooks = listAllBooks.length;
+
+        if (numAllBooks <= numBooks) {
+
+            // We need to add all books.
+            for (int i = 0; i < numAllBooks; i++) {
+                tobePicked.add(i);
+            }
+        } else {
+
+            for (int i = 0; i < numBooks; i++) {
+                tobePicked.add(i);
+            }
+        }
+
+        // Return all the books by the randomly chosen indices.
+        return tobePicked.stream().map(index -> listAllBooks[index].immutableBook())
+                .collect(Collectors.toList());
 	}
 
 	/*
@@ -336,9 +355,32 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * @see com.acertainbookstore.interfaces.BookStore#rateBooks(java.util.Set)
 	 */
 	@Override
-	public synchronized void rateBooks(Set<BookRating> bookRating) throws BookStoreException {
-		throw new BookStoreException();
-	}
+	public synchronized void rateBooks(Set<BookRating> bookRatings) throws BookStoreException {
+        if (bookRatings == null) {
+            throw new BookStoreException(BookStoreConstants.NULL_INPUT);
+        }
+
+        int isbn;
+        int rating;
+        BookStoreBook book;
+
+        for (BookRating bookRating : bookRatings) {
+            //Check whether the isbn and ratings are valid
+            isbn = bookRating.getISBN();
+            validateISBNInStock(isbn);
+
+            rating = bookRating.getRating();
+
+            if (BookStoreUtility.isInvalidRating(rating)) {
+                throw new BookStoreException(BookStoreConstants.RATING + rating + BookStoreConstants.INVALID);
+            }
+        }
+        for (BookRating bookRating : bookRatings) {
+            book = bookMap.get(bookRating.getISBN());
+            book.addRating(bookRating.getRating());
+        }
+    }
+
 
 	/*
 	 * (non-Javadoc)
