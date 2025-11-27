@@ -169,6 +169,31 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		response.getOutputStream().write(serializedResponseContent);
 	}
 
+    /**
+     * Gets the top-rated picks.
+     *
+     * @param request
+     *            the request
+     * @param response
+     *            the response
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String numBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
+        BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+        try {
+            int numBooks = BookStoreUtility.convertStringToInt(numBooksString);
+            bookStoreResponse.setList(myBookStore.getTopRatedBooks(numBooks));
+        } catch (BookStoreException ex) {
+            bookStoreResponse.setException(ex);
+        }
+
+        byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+        response.getOutputStream().write(serializedResponseContent);
+    }
+
     private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
         BookStoreResponse bookStoreResponse = new BookStoreResponse();
         try {

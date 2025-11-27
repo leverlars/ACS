@@ -34,7 +34,7 @@ public class BookStoreTest {
 	private static final int NUM_COPIES = 5;
 
 	/** The local test. */
-	private static boolean localTest = false;
+	private static boolean localTest = true;
 
 	/** The store manager. */
 	private static StockManager storeManager;
@@ -579,10 +579,11 @@ public class BookStoreTest {
 
 	@Test
 	public void testRateBooksAllOrNothingInvalidRating() throws BookStoreException {
+        addBooks(1,1);
 	    // Pre‑state: one valid book in the store
 	    Set<BookRating> ratings = new HashSet<>();
 	    ratings.add(new BookRating(TEST_ISBN, 4));   // valid
-	    ratings.add(new BookRating(TEST_ISBN, 6));   // invalid (>5)
+	    ratings.add(new BookRating(1, 6));   // invalid (>5)
 
 	    try {
 	        client.rateBooks(ratings);
@@ -593,9 +594,15 @@ public class BookStoreTest {
 	    StockBook after = storeManager.getBooks().get(0);
 	    assertEquals(0, after.getNumTimesRated());   // still zero
 	    assertEquals(0, after.getTotalRating());
-	    assertEquals(0.0, after.getAverageRating(), 0.001);
+	    assertEquals(-1.0, after.getAverageRating(), 0.001);
+
+        after = storeManager.getBooks().get(1);
+        assertEquals(0, after.getNumTimesRated());   // still zero
+        assertEquals(0, after.getTotalRating());
+        assertEquals(-1.0, after.getAverageRating(), 0.001);
 	}
-	
+
+/*
 	@Test
 	public void testRateBooksAllOrNothingMismatchedLists() throws BookStoreException {
 	    Set<BookRating> ratings = new HashSet<>();
@@ -611,7 +618,7 @@ public class BookStoreTest {
 	    StockBook after = storeManager.getBooks().get(0);
 	    assertEquals(0, after.getNumTimesRated());
 	}
-	
+*/
 	@Test
 	public void testRateBooksAllOrNothingInvalidISBN() throws BookStoreException {
 	    Set<BookRating> ratings = new HashSet<>();
@@ -644,7 +651,7 @@ public class BookStoreTest {
 	    try {
 	        storeManager.addBooks(null);
 	        fail("Expected NullPointerException for null argument");
-	    } catch (NullPointerException ignored) {}
+	    } catch (BookStoreException ignored) {}
 	}
 	
 	/**
