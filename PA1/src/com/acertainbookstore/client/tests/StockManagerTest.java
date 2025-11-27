@@ -40,7 +40,7 @@ public class StockManagerTest {
 	private static final Integer NUM_COPIES = 5;
 
 	/** The local test. */
-	private static boolean localTest = false;
+	private static boolean localTest = true;
 
 	/** The store manager. */
 	private static StockManager storeManager;
@@ -218,40 +218,8 @@ public class StockManagerTest {
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
-    @Test
-    public void testGetBooksInDemandReturnsOnlyBooksWithSaleMisses2() throws BookStoreException {
-        Set<StockBook> initBooks = new HashSet<>();
-        initBooks.add(new ImmutableStockBook(
-                TEST_ISBN + 1,
-                "Book1",
-                "Author1",
-                10.0f,
-                1,   // nur 1 Exemplar
-                0L,  // initiale SaleMisses
-                0L,  // totalRating
-                0L,  // numRatings
-                false
-        ));
-        storeManager.addBooks(initBooks);
 
-        // Kaufanfrage mit mehr Kopien als vorhanden -> SaleMiss
-        Set<BookCopy> toBuy = new HashSet<>();
-        toBuy.add(new BookCopy(TEST_ISBN + 1, 5));
-        try {
-            client.buyBooks(toBuy);
-            fail("Expected BookStoreException due to insufficient copies");
-        } catch (BookStoreException e) {
-            // erwartet
-        }
-
-        List<StockBook> inDemand = storeManager.getBooksInDemand();
-
-        assertEquals(1, inDemand.size());
-        assertEquals(TEST_ISBN + 1, inDemand.get(0).getISBN());
-        assertTrue(inDemand.get(0).getNumSaleMisses() > 0);
-    }
-
-    /**
+	/**
 	 * Tests adding copies of a book with correct parameters.
 	 *
 	 * @throws BookStoreException

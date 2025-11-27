@@ -29,30 +29,21 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 	/**
 	 * Instantiates a new {@link BookStoreKryoSerializer}.
 	 */
-    public BookStoreKryoSerializer() {
-        binaryStream = new Kryo();
-        binaryStream.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+	public BookStoreKryoSerializer() {
+		binaryStream = new Kryo();
+		binaryStream.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
 
-        // Domain-Klassen
-        binaryStream.register(ImmutableStockBook.class);
-        binaryStream.register(HashSet.class);
-        binaryStream.register(BookStoreResponse.class);
-        binaryStream.register(com.acertainbookstore.business.BookCopy.class);
-        binaryStream.register(java.util.ArrayList.class);
-        binaryStream.register(com.acertainbookstore.business.BookEditorPick.class);
-        binaryStream.register(com.acertainbookstore.business.ImmutableBook.class);
-        binaryStream.register(BookStoreMessageTag.class);
+		// register all classes
+		binaryStream.register(ImmutableStockBook.class);
+		binaryStream.register(HashSet.class);
+		binaryStream.register(BookStoreResponse.class);
+		binaryStream.register(com.acertainbookstore.business.BookCopy.class);
+		binaryStream.register(java.util.ArrayList.class);
+		binaryStream.register(com.acertainbookstore.business.BookEditorPick.class);
+		binaryStream.register(com.acertainbookstore.business.ImmutableBook.class);
+	}
 
-        binaryStream.setReferences(true);
-        binaryStream.register(BookStoreException.class);
-        binaryStream.register(StackTraceElement.class);
-        binaryStream.register(StackTraceElement[].class);
-        binaryStream.register(java.util.Collections.EMPTY_LIST.getClass());
-    }
-
-
-
-    /*
+	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see
@@ -79,5 +70,4 @@ public final class BookStoreKryoSerializer implements BookStoreSerializer {
 			return binaryStream.readClassAndObject(in);
 		}
 	}
-
 }

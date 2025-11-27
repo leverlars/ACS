@@ -3,7 +3,6 @@ package com.acertainbookstore.server;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -72,7 +71,6 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 			// The request is from the store manager; more sophisticated.
 			// security features could be added here.
 			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI.substring(6));
-
 		} else {
 			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI);
 		}
@@ -129,9 +127,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 			case GETSTOCKBOOKSBYISBN:
 				getStockBooksByISBN(request, response);
 				break;
-            case GETBOOKSINDEMAND:
-                getBooksInDemand(request, response);
-                break;
+
 			default:
 				System.err.println("Unsupported message tag.");
 				break;
@@ -169,19 +165,32 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		response.getOutputStream().write(serializedResponseContent);
 	}
 
-    private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    /**
+     * Gets the top-rated picks.
+     *
+     * @param request
+     *            the request
+     * @param response
+     *            the response
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String numBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
         BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
         try {
-            bookStoreResponse.setList(myBookStore.getBooksInDemand());
+            int numBooks = BookStoreUtility.convertStringToInt(numBooksString);
+            bookStoreResponse.setList(myBookStore.getTopRatedBooks(numBooks));
         } catch (BookStoreException ex) {
             bookStoreResponse.setException(ex);
         }
+
         byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
         response.getOutputStream().write(serializedResponseContent);
     }
 
-
-    /**
+	/**
 	 * Gets the editor picks.
 	 *
 	 * @param request
