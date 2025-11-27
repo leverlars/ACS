@@ -308,35 +308,26 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
 	@Override
-	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
+	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException{
+
         if (numBooks < 0) {
             throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
         }
 
-        // Get all books that are editor picks.
-        BookStoreBook[] listAllBooks = bookMap.values().toArray(BookStoreBook[]::new);
+        List<StockBook> stockBooks = getBooks();
 
-        Arrays.sort(listAllBooks, (a, b) -> Float.compare(b.getAverageRating(), a.getAverageRating()));
+        return stockBooks.stream()
+                .filter(b -> b.getAverageRating() > 0 )
+                .sorted((a,b) -> Float.compare(b.getAverageRating(), a.getAverageRating()))
+                .limit(numBooks)
+                .map(b -> new ImmutableBook(
+                        b.getISBN(),
+                        b.getTitle(),
+                        b.getAuthor(),
+                        b.getPrice()
+                )).collect(Collectors.toList());
 
-        Set<Integer> tobePicked = new HashSet<>();
-        int numAllBooks = listAllBooks.length;
 
-        if (numAllBooks <= numBooks) {
-
-            // We need to add all books.
-            for (int i = 0; i < numAllBooks; i++) {
-                tobePicked.add(i);
-            }
-        } else {
-
-            for (int i = 0; i < numBooks; i++) {
-                tobePicked.add(i);
-            }
-        }
-
-        // Return all the books by the randomly chosen indices.
-        return tobePicked.stream().map(index -> listAllBooks[index].immutableBook())
-                .collect(Collectors.toList());
 	}
 
 	/*
@@ -346,7 +337,15 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException();
+
+
+        var bmv = bookMap.values();
+        return bmv
+                .stream()
+                .filter(b -> b.getNumSaleMisses() > 0)
+                .map(BookStoreBook::immutableStockBook)
+                .collect(Collectors.toList());
+
 	}
 
 	/*
