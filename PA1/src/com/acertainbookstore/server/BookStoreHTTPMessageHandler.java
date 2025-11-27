@@ -110,9 +110,17 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				buyBooks(request, response);
 				break;
 
+            case RATEBOOKS:
+                rateBooks(request, response);
+                break;
+
 			case GETBOOKS:
 				getBooks(request, response);
 				break;
+
+            case GETTOPRATEDBOOKS:
+                getTopRatedBooks(request, response);
+                break;
 
 			case GETEDITORPICKS:
 				getEditorPicks(request, response);
@@ -251,6 +259,34 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
 		response.getOutputStream().write(serializedResponseContent);
 	}
+
+    /**
+     * Rate books.
+     *
+     * @param request
+     *            the request
+     * @param response
+     *            the response
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @SuppressWarnings("unchecked")
+    private void rateBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+        Set<BookRating> bookRatings = (Set<BookRating>) serializer.get().deserialize(serializedRequestContent);
+        BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+        try {
+            myBookStore.rateBooks(bookRatings);
+        } catch (BookStoreException ex) {
+            bookStoreResponse.setException(ex);
+        }
+
+        byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+        response.getOutputStream().write(serializedResponseContent);
+    }
+
 
 	/**
 	 * Updates editor picks.
