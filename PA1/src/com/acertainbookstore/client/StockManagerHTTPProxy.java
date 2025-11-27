@@ -3,6 +3,7 @@ package com.acertainbookstore.client;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.interfaces.BookStore;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
@@ -18,14 +19,7 @@ import com.acertainbookstore.utils.BookStoreRequest;
 import com.acertainbookstore.utils.BookStoreResponse;
 import com.acertainbookstore.utils.BookStoreUtility;
 
-/**
- * {@link StockManagerHTTPProxy} implements the client level synchronous
- * {@link CertainBookStore} API declared in the {@link StockManager} class. Uses
- * the HTTP protocol for communication with the server.
- * 
- * @see CertainBookStore
- * @see StockManager
- */
+
 public class StockManagerHTTPProxy implements StockManager {
 
 	/** The client. */
@@ -138,12 +132,24 @@ public class StockManagerHTTPProxy implements StockManager {
 	 * 
 	 * @see com.acertainbookstore.interfaces.StockManager#getBooksInDemand()
 	 */
-	@Override
-	public List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException("Not implemented");
-	}
+    @Override
+    public List<StockBook> getBooksInDemand() throws BookStoreException {
+        String urlString  = serverAddress + "/" + BookStoreMessageTag.GETBOOKSINDEMAND;
+        BookStoreRequest bookStoreRequest = BookStoreRequest.newGetRequest(urlString);
 
-	/*
+        BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(
+                client, bookStoreRequest, serializer.get());
+
+        if (bookStoreResponse.getException() != null) {
+            throw bookStoreResponse.getException();
+        }
+
+        return (List<StockBook>) bookStoreResponse.getList();
+    }
+
+
+
+    /*
 	 * (non-Javadoc)
 	 * 
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()

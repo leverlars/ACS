@@ -6,17 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.business.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.acertainbookstore.business.Book;
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.CertainBookStore;
-import com.acertainbookstore.business.ImmutableStockBook;
-import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.client.BookStoreHTTPProxy;
 import com.acertainbookstore.client.StockManagerHTTPProxy;
 import com.acertainbookstore.interfaces.BookStore;
@@ -38,7 +34,7 @@ public class BookStoreTest {
 	private static final int NUM_COPIES = 5;
 
 	/** The local test. */
-	private static boolean localTest = true;
+	private static boolean localTest = false;
 
 	/** The store manager. */
 	private static StockManager storeManager;
@@ -150,7 +146,40 @@ public class BookStoreTest {
 				&& bookInList.getTotalRating() == addedBook.getTotalRating()
 				&& bookInList.isEditorPick() == addedBook.isEditorPick());
 	}
+    @Test
+    public void testGetBooksInDemandReturnsOnlyBooksWithSaleMisses() throws BookStoreException {
+        CertainBookStore store = new CertainBookStore();
+        Set<StockBook> initBooks = new HashSet<>();
+        initBooks.add(
+                new ImmutableStockBook(TEST_ISBN,
+                        "Book1",
+                        "Author1",
+                        10.0f,
+                        1,
+                        1L,
+                        0L,
+                        1L,
+                        true
+                )
+        );
+        store.addBooks(initBooks);
+        Set<BookCopy> toBuy = new HashSet<>();
+        toBuy.add(new BookCopy(TEST_ISBN, 1));
+        try {
+            store.buyBooks(toBuy);
+        }
+        catch (BookStoreException e) {
 
+        }
+
+
+        List<StockBook> booksInDemand = store.getBooksInDemand();
+
+        assertEquals(1, booksInDemand.size());
+        StockBook bookInDemand = booksInDemand.get(0);
+        assertEquals(TEST_ISBN, bookInDemand.getISBN());
+        assertTrue(bookInDemand.getNumSaleMisses() > 0);
+    }
 	/**
 	 * Tests that books with invalid ISBNs cannot be bought.
 	 *
@@ -364,4 +393,8 @@ public class BookStoreTest {
 			((StockManagerHTTPProxy) storeManager).stop();
 		}
 	}
+
+
+
+
 }

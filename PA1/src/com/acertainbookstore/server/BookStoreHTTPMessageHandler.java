@@ -3,19 +3,17 @@ package com.acertainbookstore.server;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.acertainbookstore.business.*;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.BookEditorPick;
-import com.acertainbookstore.business.CertainBookStore;
-import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.utils.BookStoreKryoSerializer;
 import com.acertainbookstore.interfaces.BookStoreSerializer;
 import com.acertainbookstore.utils.BookStoreConstants;
@@ -74,6 +72,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 			// The request is from the store manager; more sophisticated.
 			// security features could be added here.
 			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI.substring(6));
+
 		} else {
 			messageTag = BookStoreUtility.convertURItoMessageTag(requestURI);
 		}
@@ -122,7 +121,9 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 			case GETSTOCKBOOKSBYISBN:
 				getStockBooksByISBN(request, response);
 				break;
-
+            case GETBOOKSINDEMAND:
+                getBooksInDemand(request, response);
+                break;
 			default:
 				System.err.println("Unsupported message tag.");
 				break;
@@ -160,7 +161,19 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 		response.getOutputStream().write(serializedResponseContent);
 	}
 
-	/**
+    private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        BookStoreResponse bookStoreResponse = new BookStoreResponse();
+        try {
+            bookStoreResponse.setList(myBookStore.getBooksInDemand());
+        } catch (BookStoreException ex) {
+            bookStoreResponse.setException(ex);
+        }
+        byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+        response.getOutputStream().write(serializedResponseContent);
+    }
+
+
+    /**
 	 * Gets the editor picks.
 	 *
 	 * @param request
