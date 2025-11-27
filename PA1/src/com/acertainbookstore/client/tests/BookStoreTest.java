@@ -577,6 +577,76 @@ public class BookStoreTest {
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
 
+	@Test
+	public void testRateBooksAllOrNothingInvalidRating() throws BookStoreException {
+	    // Pre‑state: one valid book in the store
+	    Set<BookRating> ratings = new HashSet<>();
+	    ratings.add(new BookRating(TEST_ISBN, 4));   // valid
+	    ratings.add(new BookRating(TEST_ISBN, 6));   // invalid (>5)
+
+	    try {
+	        client.rateBooks(ratings);
+	        fail("Expected BookStoreException because of rating 6");
+	    } catch (BookStoreException ignored) {}
+
+	    // Verify that the valid rating was NOT applied
+	    StockBook after = storeManager.getBooks().get(0);
+	    assertEquals(0, after.getNumTimesRated());   // still zero
+	    assertEquals(0, after.getTotalRating());
+	    assertEquals(0.0, after.getAverageRating(), 0.001);
+	}
+	
+	@Test
+	public void testRateBooksAllOrNothingMismatchedLists() throws BookStoreException {
+	    Set<BookRating> ratings = new HashSet<>();
+	    ratings.add(new BookRating(TEST_ISBN, 3));
+	    ratings.add(new BookRating(TEST_ISBN, 5)); // duplicate ISBN, different rating
+
+	    try {
+	        client.rateBooks(ratings);
+	        fail("Expected BookStoreException due to duplicate ISBN entries");
+	    } catch (BookStoreException ignored) {}
+
+	    // No rating should have been recorded
+	    StockBook after = storeManager.getBooks().get(0);
+	    assertEquals(0, after.getNumTimesRated());
+	}
+	
+	@Test
+	public void testRateBooksAllOrNothingInvalidISBN() throws BookStoreException {
+	    Set<BookRating> ratings = new HashSet<>();
+	    ratings.add(new BookRating(TEST_ISBN, 4));   // valid
+	    ratings.add(new BookRating(-999, 3));       // invalid ISBN
+
+	    try {
+	        client.rateBooks(ratings);
+	        fail("Expected BookStoreException because of invalid ISBN");
+	    } catch (BookStoreException ignored) {}
+
+	    // Verify that the valid rating was NOT applied
+	    StockBook after = storeManager.getBooks().get(0);
+	    assertEquals(0, after.getNumTimesRated());
+	}
+	
+	@Test
+	public void testAddBooksNegativeCopies() throws BookStoreException {
+	    Set<StockBook> toAdd = new HashSet<>();
+	    toAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "Bad Book", "Evil", 1.0f, -5, 0, 0, 0, false));
+
+	    try {
+	        storeManager.addBooks(toAdd);
+	        fail("Expected BookStoreException for negative copies");
+	    } catch (BookStoreException ignored) {}
+	}
+	
+	@Test
+	public void testAddBooksNullCollection() throws BookStoreException {
+	    try {
+	        storeManager.addBooks(null);
+	        fail("Expected NullPointerException for null argument");
+	    } catch (NullPointerException ignored) {}
+	}
+	
 	/**
 	 * Tear down after class.
 	 *
