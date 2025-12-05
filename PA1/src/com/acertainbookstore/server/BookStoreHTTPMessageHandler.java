@@ -107,10 +107,14 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				break;
 
 			case BUYBOOKS:
+                System.out.println(request);
+                System.out.println(response);
 				buyBooks(request, response);
 				break;
 
             case RATEBOOKS:
+                System.out.println(request);
+                System.out.println(response);
                 rateBooks(request, response);
                 break;
 
@@ -119,6 +123,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 				break;
 
             case GETTOPRATEDBOOKS:
+                System.out.println(request);
                 getTopRatedBooks(request, response);
                 break;
 
