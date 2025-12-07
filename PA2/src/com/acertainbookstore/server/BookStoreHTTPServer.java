@@ -41,7 +41,7 @@ public class BookStoreHTTPServer {
 		BookStoreHTTPMessageHandler handler = null;
 		
 		if (SINGLE_LOCK) {
-			SingleLockConcurrentCertainBookStore bookStore = new SingleLockConcurrentCertainBookStore();
+                SingleLockConcurrentCertainBookStore bookStore = new SingleLockConcurrentCertainBookStore();
 			/* we pass bookStore to BookStoreHTTPMessageHandler constructor twice, 
 			 * since it implements both interfaces: BookStore and StockManager */
 			handler = new BookStoreHTTPMessageHandler(bookStore, bookStore);
