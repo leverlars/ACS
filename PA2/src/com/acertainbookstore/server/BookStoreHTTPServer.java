@@ -20,7 +20,7 @@ public class BookStoreHTTPServer {
 	/** The constant, defining which locking scheme implementation to use
 	 *  true - single lock 
 	 *  false - two-level locking */
-	private static final boolean SINGLE_LOCK = true;
+	private static final boolean SINGLE_LOCK = false;
 
 	/**
 	 * Prevents the instantiation of a new {@link BookStoreHTTPServer}.
