@@ -20,7 +20,7 @@ public class BookStoreHTTPServer {
 	/** The constant, defining which locking scheme implementation to use
 	 *  true - single lock 
 	 *  false - two-level locking */
-	private static final boolean SINGLE_LOCK = true;
+	private static final boolean SINGLE_LOCK = false;
 
 	/**
 	 * Prevents the instantiation of a new {@link BookStoreHTTPServer}.
@@ -41,7 +41,7 @@ public class BookStoreHTTPServer {
 		BookStoreHTTPMessageHandler handler = null;
 		
 		if (SINGLE_LOCK) {
-			SingleLockConcurrentCertainBookStore bookStore = new SingleLockConcurrentCertainBookStore();
+                SingleLockConcurrentCertainBookStore bookStore = new SingleLockConcurrentCertainBookStore();
 			/* we pass bookStore to BookStoreHTTPMessageHandler constructor twice, 
 			 * since it implements both interfaces: BookStore and StockManager */
 			handler = new BookStoreHTTPMessageHandler(bookStore, bookStore);
