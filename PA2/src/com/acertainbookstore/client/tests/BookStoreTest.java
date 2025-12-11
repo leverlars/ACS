@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -363,7 +365,250 @@ public class BookStoreTest {
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
 
-	/**
+
+    /**
+     * Tests concurrency of buyBook and addCopy.
+     *
+     * @throws BookStoreException
+     *             the book store exception
+     */
+    @Test
+    public void testConcurrencyAddBuyBook1() throws BookStoreException {
+        int n = 500;
+        Set<StockBook> booksToAdd = new HashSet<StockBook>();
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+                (float) 300, n, 0, 0, 0, false));
+        storeManager.removeAllBooks();
+        storeManager.addBooks(booksToAdd);
+
+        Thread thread1 = new Thread(() -> {
+            Set<BookCopy> booksToBuy = new HashSet<BookCopy>();
+            booksToBuy.add(new BookCopy(TEST_ISBN + 1, 1));
+
+            // Try to buy books
+            try {
+                for (int i = 0; i < n; i++) {
+                    client.buyBooks(booksToBuy);
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Thread thread2 = new Thread(() -> {
+            Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+            bookCopiesSet.add(new BookCopy(TEST_ISBN + 1, 1));
+            try {
+                for (int i = 0; i < n; i++) {
+                    storeManager.addCopies(bookCopiesSet);
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Start both threads
+        thread1.start();
+        thread2.start();
+
+        // Wait for both threads to complete
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        List<StockBook> booksInStoreList = storeManager.getBooks();
+        assertTrue(booksInStoreList.get(0).getNumCopies() == n);
+    }
+
+    /**
+     * Tests concurrency of buyBook and addCopy.
+     *
+     * @throws BookStoreException
+     *             the book store exception
+     */
+    @Test
+    public void testConcurrencyAddBuyBook2() throws BookStoreException {
+        int n = 500;
+        int m = 500;
+        Set<StockBook> booksToAdd = new HashSet<StockBook>();
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "A New Hope", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The Empire Strikes Back", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Return of the Jedi", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        storeManager.removeAllBooks();
+        storeManager.addBooks(booksToAdd);
+
+        Thread thread1 = new Thread(() -> {
+            Set<BookCopy> booksToBuyAndAdd = new HashSet<BookCopy>();
+            booksToBuyAndAdd.add(new BookCopy(TEST_ISBN + 1, 1));
+            booksToBuyAndAdd.add(new BookCopy(TEST_ISBN + 2, 1));
+            booksToBuyAndAdd.add(new BookCopy(TEST_ISBN + 3, 1));
+
+            // Try to buy books
+            try {
+                for (int i = 0; i < n; i++) {
+                    client.buyBooks(booksToBuyAndAdd);
+                    storeManager.addCopies(booksToBuyAndAdd);
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        AtomicBoolean testSucces = new AtomicBoolean(true);
+
+        Thread thread2 = new Thread(() -> {
+            List<StockBook> booksInStoreList;
+            try {
+                for (int i = 0; i < m; i++) {
+                    booksInStoreList = storeManager.getBooks();
+                    testSucces.set(testSucces.get() &&
+                            (booksInStoreList.stream().allMatch(book -> book.getNumCopies() == 0) ||
+                                    booksInStoreList.stream().allMatch(book -> book.getNumCopies() == 1)));
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Start both threads
+        thread1.start();
+        thread2.start();
+
+        // Wait for both threads to complete
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        List<StockBook> booksInStoreList = storeManager.getBooks();
+        assertTrue(testSucces.get());
+    }
+
+    /**
+     * Tests concurrency of addCopy.
+     *
+     * @throws BookStoreException
+     *             the book store exception
+     */
+    @Test
+    public void testConcurrencyAddBook() throws BookStoreException {
+        int n = 100;
+        Set<StockBook> booksToAdd = new HashSet<StockBook>();
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+                (float) 300, 10, 0, 0, 0, false));
+        storeManager.removeAllBooks();
+        storeManager.addBooks(booksToAdd);
+
+        Thread thread1 = new Thread(() -> {
+            Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+            bookCopiesSet.add(new BookCopy(TEST_ISBN + 1, 1));
+            try {
+                for (int i = 0; i < n; i++) {
+                    storeManager.addCopies(bookCopiesSet);
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Thread thread2 = new Thread(() -> {
+            Set<BookCopy> bookCopiesSet = new HashSet<BookCopy>();
+            bookCopiesSet.add(new BookCopy(TEST_ISBN + 1, 1));
+            try {
+                for (int i = 0; i < n; i++) {
+                    storeManager.addCopies(bookCopiesSet);
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Start both threads
+        thread1.start();
+        thread2.start();
+
+        // Wait for both threads to complete
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        List<StockBook> booksInStoreList = storeManager.getBooks();
+        assertTrue(booksInStoreList.get(0).getNumCopies() == 2 * n + 10);
+    }
+
+    /**
+     * Tests concurrency of buyBook and addCopy.
+     *
+     * @throws BookStoreException
+     *             the book store exception
+     */
+    @Test
+    public void testConcurrencyRemoveAddBook() throws BookStoreException {
+        int n = 500;
+        int m = 500;
+        Set<StockBook> booksToAdd = new HashSet<StockBook>();
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "A New Hope", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The Empire Strikes Back", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Return of the Jedi", "George Lucas",
+                (float) 300, 1, 0, 0, 0, false));
+        storeManager.removeAllBooks();
+
+        Thread thread1 = new Thread(() -> {
+            try {
+                for (int i = 0; i < n; i++) {
+                    storeManager.addBooks(booksToAdd);
+                    storeManager.removeAllBooks();
+                }
+            } catch (BookStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        AtomicBoolean testSucces = new AtomicBoolean(true);
+        AtomicInteger fails = new AtomicInteger();
+
+        Thread thread2 = new Thread(() -> {
+            List<StockBook> booksInStoreList;
+            try {
+                for (int i = 0; i < m; i++) {
+                    booksInStoreList = storeManager.getBooks();
+                    testSucces.set(testSucces.get() &&
+                            (booksInStoreList.isEmpty() || booksInStoreList.size() == 3));
+                    }
+            } catch (Exception e) {
+                testSucces.set(false);
+            }
+        });
+
+        // Start both threads
+        thread1.start();
+        thread2.start();
+
+        // Wait for both threads to complete
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        List<StockBook> booksInStoreList = storeManager.getBooks();
+        assertTrue(testSucces.get());
+    }
+
+    /**
 	 * Tear down after class.
 	 *
 	 * @throws BookStoreException
